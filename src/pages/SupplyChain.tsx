@@ -1,41 +1,53 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ChevronDown, ChevronRight, ArrowLeft, Truck, Factory, FileText, Eye } from "lucide-react";
+import { ChevronDown, ChevronRight, ArrowLeft, Truck, Factory, FileText, Eye, X, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 type Tab = "shipments" | "orders" | "factory";
+type Modal = null | "shipment" | "order" | "factory";
 
-const shipments = [
+type ShipmentItem = {
+  id: string; styles: number; carrier: string; dest: string; qty: number; cost: string; date: string; status: string;
+  details: { style: string; qty: number }[];
+};
+type OrderItem = {
+  contract: string; factory: string; style: string; date: string; total: number; shipped: number; remain: number; progress: number; status: string; delivery: string;
+};
+type FactoryItem = {
+  name: string; addr: string; contact: string; phone: string; styles: number; qty: string; amount: string;
+};
+
+const initShipments: ShipmentItem[] = [
   { id: "FBA001234", styles: 3, carrier: "顺丰", dest: "美西ONT8", qty: 5000, cost: "¥21,000", date: "01-20", status: "🚚 运输中",
-    details: [
-      { style: "ABC001 运动T恤", qty: 2000 },
-      { style: "ABC002 运动短裤", qty: 1500 },
-      { style: "ABC003 运动外套", qty: 1500 },
-    ]
-  },
+    details: [{ style: "ABC001 运动T恤", qty: 2000 }, { style: "ABC002 运动短裤", qty: 1500 }, { style: "ABC003 运动外套", qty: 1500 }] },
   { id: "FBA001230", styles: 2, carrier: "德邦", dest: "美东JFK1", qty: 3200, cost: "¥15,600", date: "01-18", status: "🚚 运输中",
-    details: [
-      { style: "ABC001 运动T恤", qty: 1800 },
-      { style: "ABC004 运动背心", qty: 1400 },
-    ]
-  },
+    details: [{ style: "ABC001 运动T恤", qty: 1800 }, { style: "ABC004 运动背心", qty: 1400 }] },
   { id: "FBA001225", styles: 1, carrier: "顺丰", dest: "美西ONT8", qty: 2000, cost: "¥9,200", date: "01-15", status: "✅ 已签收",
-    details: [{ style: "ABC002 运动短裤", qty: 2000 }]
-  },
+    details: [{ style: "ABC002 运动短裤", qty: 2000 }] },
 ];
 
-const purchaseOrders = [
+const initOrders: OrderItem[] = [
   { contract: "HT240115", factory: "东莞A厂", style: "ABC001", date: "01-15", total: 2000, shipped: 1200, remain: 800, progress: 60, status: "🟡 进行中", delivery: "02-15" },
   { contract: "HT240110", factory: "深圳B厂", style: "ABC002", date: "01-10", total: 1500, shipped: 1500, remain: 0, progress: 100, status: "✅ 已完成", delivery: "01-30" },
   { contract: "HT240118", factory: "广州C厂", style: "ABC003", date: "01-18", total: 3000, shipped: 800, remain: 2200, progress: 27, status: "🟡 进行中", delivery: "02-28" },
   { contract: "HT240120", factory: "东莞A厂", style: "ABC005", date: "01-20", total: 3000, shipped: 0, remain: 3000, progress: 0, status: "⏳ 待生产", delivery: "03-01" },
 ];
 
+const initFactories: FactoryItem[] = [
+  { name: "东莞A厂", addr: "东莞xxx", contact: "张三", phone: "13800138000", styles: 25, qty: "16,000", amount: "¥58万" },
+  { name: "深圳B厂", addr: "深圳xxx", contact: "李四", phone: "13900139000", styles: 18, qty: "8,500", amount: "¥32万" },
+  { name: "广州C厂", addr: "广州xxx", contact: "王五", phone: "13700137000", styles: 15, qty: "4,400", amount: "¥18万" },
+];
+
+const carriers = ["顺丰", "德邦", "中通", "极兔", "京东物流"];
+const destinations = ["美西ONT8", "美西PHX5", "美东JFK1", "美中ORD2"];
+const factoryOptions = ["东莞A厂", "深圳B厂", "广州C厂"];
+const styleOptions = ["ABC001", "ABC002", "ABC003", "ABC004", "ABC005"];
+const styleNames: Record<string, string> = { ABC001: "运动T恤", ABC002: "运动短裤", ABC003: "运动外套", ABC004: "运动背心", ABC005: "运动长裤" };
+
 const factoryDetail = {
   name: "东莞A厂",
   stats: { orders: 32, styles: 25, total: 58000, shipped: 42000, inProduction: 16000 },
-  contact: "张三",
-  phone: "13800138000",
-  address: "广东省东莞市xxx工业区",
+  contact: "张三", phone: "13800138000", address: "广东省东莞市xxx工业区",
   styleBreakdown: [
     { style: "ABC001", name: "运动T恤", orders: 3, total: 6000, shipped: 5200, remain: 800, progress: 87 },
     { style: "ABC002", name: "运动短裤", orders: 2, total: 3000, shipped: 2500, remain: 500, progress: 83 },
@@ -43,10 +55,227 @@ const factoryDetail = {
   ],
 };
 
+/* ──── Modal Overlay ──── */
+function ModalOverlay({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40" onClick={onClose}>
+      <div className="bg-card rounded-xl shadow-xl w-full max-w-[720px] max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h3 className="text-base font-semibold">{title}</h3>
+          <button onClick={onClose} className="p-1 rounded hover:bg-muted"><X className="w-4 h-4" /></button>
+        </div>
+        <div className="p-6">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <label className="block text-xs font-medium text-muted-foreground mb-1">{children}</label>;
+}
+
+function FormInput({ label, value, onChange, type = "text", placeholder = "" }: { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
+  return (
+    <div>
+      <FieldLabel>{label}</FieldLabel>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+        className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+    </div>
+  );
+}
+
+function FormSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
+  return (
+    <div>
+      <FieldLabel>{label}</FieldLabel>
+      <select value={value} onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+        <option value="">请选择</option>
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  );
+}
+
+/* ──── New Shipment Form ──── */
+function NewShipmentForm({ onSave, onClose }: { onSave: (s: ShipmentItem) => void; onClose: () => void }) {
+  const [fbaId, setFbaId] = useState("FBA00" + (1240 + Math.floor(Math.random() * 50)));
+  const [carrier, setCarrier] = useState("");
+  const [dest, setDest] = useState("");
+  const [date, setDate] = useState("2024-01-21");
+  const [costUnit, setCostUnit] = useState("4.2");
+  const [lines, setLines] = useState<{ style: string; qty: number }[]>([{ style: "", qty: 0 }]);
+
+  const addLine = () => setLines([...lines, { style: "", qty: 0 }]);
+  const removeLine = (i: number) => setLines(lines.filter((_, idx) => idx !== i));
+  const updateLine = (i: number, field: "style" | "qty", val: string) => {
+    const next = [...lines];
+    if (field === "qty") next[i].qty = parseInt(val) || 0;
+    else next[i].style = val;
+    setLines(next);
+  };
+
+  const totalQty = lines.reduce((s, l) => s + l.qty, 0);
+  const totalCost = Math.round(totalQty * parseFloat(costUnit || "0"));
+
+  const handleSave = () => {
+    if (!carrier || !dest || lines.every((l) => !l.style || l.qty <= 0)) {
+      toast.error("请填写完整信息");
+      return;
+    }
+    const validLines = lines.filter((l) => l.style && l.qty > 0);
+    onSave({
+      id: fbaId,
+      styles: validLines.length,
+      carrier,
+      dest,
+      qty: totalQty,
+      cost: `¥${totalCost.toLocaleString()}`,
+      date: date.slice(5).replace("-", "-"),
+      status: "⏳ 待发货",
+      details: validLines.map((l) => ({ style: `${l.style} ${styleNames[l.style] || ""}`, qty: l.qty })),
+    });
+    toast.success(`发货单 ${fbaId} 创建成功！`);
+    onClose();
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 gap-4">
+        <FormInput label="FBA编号" value={fbaId} onChange={setFbaId} />
+        <FormSelect label="物流商" value={carrier} onChange={setCarrier} options={carriers} />
+        <FormSelect label="目的地" value={dest} onChange={setDest} options={destinations} />
+        <FormInput label="发货日期" value={date} onChange={setDate} type="date" />
+        <FormInput label="单价（元/件）" value={costUnit} onChange={setCostUnit} type="number" />
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <FieldLabel>发货明细</FieldLabel>
+          <button onClick={addLine} className="text-xs text-primary flex items-center gap-1 hover:underline"><Plus className="w-3 h-3" />添加款式</button>
+        </div>
+        <div className="space-y-2">
+          {lines.map((l, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <select value={l.style} onChange={(e) => updateLine(i, "style", e.target.value)}
+                className="flex-1 px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                <option value="">选择款式</option>
+                {styleOptions.map((s) => <option key={s} value={s}>{s} {styleNames[s]}</option>)}
+              </select>
+              <input type="number" min={0} value={l.qty || ""} onChange={(e) => updateLine(i, "qty", e.target.value)} placeholder="数量"
+                className="w-28 px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              {lines.length > 1 && (
+                <button onClick={() => removeLine(i)} className="p-1.5 rounded hover:bg-muted text-muted-foreground"><Trash2 className="w-4 h-4" /></button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-3 rounded-lg bg-muted/50 text-sm flex gap-6">
+        <span>总数量: <b>{totalQty.toLocaleString()}件</b></span>
+        <span>预估运费: <b className="text-primary">¥{totalCost.toLocaleString()}</b></span>
+        <span>款式数: <b>{lines.filter((l) => l.style).length}款</b></span>
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm">取消</button>
+        <button onClick={handleSave} className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">保存</button>
+      </div>
+    </div>
+  );
+}
+
+/* ──── New Order Form ──── */
+function NewOrderForm({ onSave, onClose }: { onSave: (o: OrderItem) => void; onClose: () => void }) {
+  const [contract, setContract] = useState("HT2401" + (20 + Math.floor(Math.random() * 30)));
+  const [factory, setFactory] = useState("");
+  const [style, setStyle] = useState("");
+  const [date, setDate] = useState("2024-01-21");
+  const [delivery, setDelivery] = useState("2024-03-01");
+  const [total, setTotal] = useState("2000");
+  const [remark, setRemark] = useState("");
+
+  const handleSave = () => {
+    if (!factory || !style || !total) { toast.error("请填写完整信息"); return; }
+    const qty = parseInt(total) || 0;
+    onSave({
+      contract, factory, style,
+      date: date.slice(5).replace("-", "-"),
+      total: qty, shipped: 0, remain: qty, progress: 0,
+      status: "⏳ 待生产",
+      delivery: delivery.slice(5).replace("-", "-"),
+    });
+    toast.success(`采购订单 ${contract} 创建成功！`);
+    onClose();
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 gap-4">
+        <FormInput label="合同编号" value={contract} onChange={setContract} />
+        <FormSelect label="工厂" value={factory} onChange={setFactory} options={factoryOptions} />
+        <FormSelect label="款号" value={style} onChange={setStyle} options={styleOptions} />
+        <FormInput label="下单日期" value={date} onChange={setDate} type="date" />
+        <FormInput label="交货日期" value={delivery} onChange={setDelivery} type="date" />
+        <FormInput label="下单总量" value={total} onChange={setTotal} type="number" />
+      </div>
+      <FormInput label="备注" value={remark} onChange={setRemark} placeholder="可选" />
+
+      {style && (
+        <div className="p-3 rounded-lg bg-accent/50 text-sm">
+          💡 款式 <b>{style} {styleNames[style]}</b> — 下单 <b>{parseInt(total || "0").toLocaleString()}件</b> 至 <b>{factory || "..."}</b>
+        </div>
+      )}
+
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm">取消</button>
+        <button onClick={handleSave} className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">保存</button>
+      </div>
+    </div>
+  );
+}
+
+/* ──── New Factory Form ──── */
+function NewFactoryForm({ onSave, onClose }: { onSave: (f: FactoryItem) => void; onClose: () => void }) {
+  const [name, setName] = useState("");
+  const [addr, setAddr] = useState("");
+  const [contact, setContact] = useState("");
+  const [phone, setPhone] = useState("");
+
+  const handleSave = () => {
+    if (!name || !contact) { toast.error("请填写工厂名称和联系人"); return; }
+    onSave({ name, addr, contact, phone, styles: 0, qty: "0", amount: "¥0" });
+    toast.success(`工厂 ${name} 添加成功！`);
+    onClose();
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 gap-4">
+        <FormInput label="工厂名称" value={name} onChange={setName} placeholder="如: 佛山D厂" />
+        <FormInput label="联系人" value={contact} onChange={setContact} placeholder="如: 赵六" />
+        <FormInput label="地址" value={addr} onChange={setAddr} placeholder="如: 广东省佛山市xxx" />
+        <FormInput label="联系电话" value={phone} onChange={setPhone} placeholder="如: 13600136000" />
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm">取消</button>
+        <button onClick={handleSave} className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">保存</button>
+      </div>
+    </div>
+  );
+}
+
+/* ──── Main Page ──── */
 export default function SupplyChain() {
   const [tab, setTab] = useState<Tab>("shipments");
   const [expandedShipment, setExpandedShipment] = useState<string | null>("FBA001234");
   const [showFactory, setShowFactory] = useState(false);
+  const [modal, setModal] = useState<Modal>(null);
+
+  const [shipmentList, setShipmentList] = useState<ShipmentItem[]>(initShipments);
+  const [orderList, setOrderList] = useState<OrderItem[]>(initOrders);
+  const [factoryList, setFactoryList] = useState<FactoryItem[]>(initFactories);
 
   if (showFactory) {
     return (
@@ -54,11 +283,8 @@ export default function SupplyChain() {
         <button onClick={() => setShowFactory(false)} className="flex items-center gap-2 text-sm text-primary hover:underline">
           <ArrowLeft className="w-4 h-4" /> 返回列表
         </button>
-
         <div className="stat-card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">🏭 {factoryDetail.name}</h2>
-          </div>
+          <h2 className="text-lg font-bold mb-4">🏭 {factoryDetail.name}</h2>
           <div className="grid grid-cols-5 gap-3 mb-4">
             {[
               { label: "总订单数", value: factoryDetail.stats.orders },
@@ -77,7 +303,6 @@ export default function SupplyChain() {
             联系人: {factoryDetail.contact} &nbsp;|&nbsp; 电话: {factoryDetail.phone} &nbsp;|&nbsp; 地址: {factoryDetail.address}
           </div>
         </div>
-
         <div className="stat-card">
           <h3 className="section-title">👔 按款式汇总</h3>
           <table className="data-table">
@@ -85,11 +310,8 @@ export default function SupplyChain() {
             <tbody>
               {factoryDetail.styleBreakdown.map((r) => (
                 <tr key={r.style}>
-                  <td className="font-medium">{r.style}</td>
-                  <td>{r.name}</td>
-                  <td>{r.orders}</td>
-                  <td>{r.total.toLocaleString()}</td>
-                  <td>{r.shipped.toLocaleString()}</td>
+                  <td className="font-medium">{r.style}</td><td>{r.name}</td><td>{r.orders}</td>
+                  <td>{r.total.toLocaleString()}</td><td>{r.shipped.toLocaleString()}</td>
                   <td className="text-warning font-medium">{r.remain.toLocaleString()}</td>
                   <td>
                     <div className="flex items-center gap-2">
@@ -110,20 +332,32 @@ export default function SupplyChain() {
 
   return (
     <div className="space-y-6 max-w-[1200px]">
+      {/* Modals */}
+      {modal === "shipment" && (
+        <ModalOverlay title="新建发货批次" onClose={() => setModal(null)}>
+          <NewShipmentForm onSave={(s) => { setShipmentList([s, ...shipmentList]); setExpandedShipment(s.id); }} onClose={() => setModal(null)} />
+        </ModalOverlay>
+      )}
+      {modal === "order" && (
+        <ModalOverlay title="新建采购订单" onClose={() => setModal(null)}>
+          <NewOrderForm onSave={(o) => setOrderList([o, ...orderList])} onClose={() => setModal(null)} />
+        </ModalOverlay>
+      )}
+      {modal === "factory" && (
+        <ModalOverlay title="新建工厂" onClose={() => setModal(null)}>
+          <NewFactoryForm onSave={(f) => setFactoryList([f, ...factoryList])} onClose={() => setModal(null)} />
+        </ModalOverlay>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-1 bg-muted p-1 rounded-lg w-fit">
         {([
-          { key: "shipments", label: "🚚 发货批次", icon: Truck },
-          { key: "orders", label: "📋 采购订单", icon: FileText },
-          { key: "factory", label: "🏭 供应商", icon: Factory },
-        ] as const).map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-md text-sm transition-colors ${
-              tab === t.key ? "bg-card shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
+          { key: "shipments" as const, label: "🚚 发货批次" },
+          { key: "orders" as const, label: "📋 采购订单" },
+          { key: "factory" as const, label: "🏭 供应商" },
+        ]).map((t) => (
+          <button key={t.key} onClick={() => setTab(t.key)}
+            className={`px-4 py-2 rounded-md text-sm transition-colors ${tab === t.key ? "bg-card shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}>
             {t.label}
           </button>
         ))}
@@ -133,33 +367,26 @@ export default function SupplyChain() {
         <div className="stat-card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="section-title mb-0">🚚 出库管理</h2>
-            <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm">+ 新建发货</button>
+            <button onClick={() => setModal("shipment")} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">+ 新建发货</button>
           </div>
           <table className="data-table">
             <thead><tr><th></th><th>FBA编号</th><th>款式数</th><th>物流商</th><th>目的地</th><th>总数量</th><th>运费</th><th>发货日期</th><th>状态</th></tr></thead>
             <tbody>
-              {shipments.map((s) => (
+              {shipmentList.map((s) => (
                 <>
                   <tr key={s.id} className="cursor-pointer" onClick={() => setExpandedShipment(expandedShipment === s.id ? null : s.id)}>
                     <td>{expandedShipment === s.id ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}</td>
-                    <td className="font-medium">{s.id}</td>
-                    <td>{s.styles}款</td>
-                    <td>{s.carrier}</td>
-                    <td>{s.dest}</td>
-                    <td>{s.qty.toLocaleString()}</td>
-                    <td>{s.cost}</td>
-                    <td>{s.date}</td>
-                    <td>{s.status}</td>
+                    <td className="font-medium">{s.id}</td><td>{s.styles}款</td><td>{s.carrier}</td><td>{s.dest}</td>
+                    <td>{s.qty.toLocaleString()}</td><td>{s.cost}</td><td>{s.date}</td><td>{s.status}</td>
                   </tr>
                   {expandedShipment === s.id && (
-                    <tr key={s.id + "-detail"}>
+                    <tr key={s.id + "-d"}>
                       <td colSpan={9} className="bg-accent/30 p-4">
                         <div className="text-sm font-medium mb-2">📋 发货汇总</div>
                         <div className="grid grid-cols-3 gap-2">
                           {s.details.map((d) => (
                             <div key={d.style} className="p-2 bg-card rounded-lg text-sm flex justify-between">
-                              <span>{d.style}</span>
-                              <span className="font-medium">{d.qty.toLocaleString()}件</span>
+                              <span>{d.style}</span><span className="font-medium">{d.qty.toLocaleString()}件</span>
                             </div>
                           ))}
                         </div>
@@ -177,19 +404,15 @@ export default function SupplyChain() {
         <div className="stat-card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="section-title mb-0">📋 采购订单管理</h2>
-            <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm">+ 新建采购单</button>
+            <button onClick={() => setModal("order")} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">+ 新建采购单</button>
           </div>
           <table className="data-table">
             <thead><tr><th>合同编号</th><th>工厂</th><th>款号</th><th>下单日期</th><th>总数量</th><th>已发货</th><th>剩余</th><th>进度</th><th>交货日期</th><th>状态</th></tr></thead>
             <tbody>
-              {purchaseOrders.map((o) => (
+              {orderList.map((o) => (
                 <tr key={o.contract}>
-                  <td className="font-medium">{o.contract}</td>
-                  <td>{o.factory}</td>
-                  <td>{o.style}</td>
-                  <td>{o.date}</td>
-                  <td>{o.total.toLocaleString()}</td>
-                  <td>{o.shipped.toLocaleString()}</td>
+                  <td className="font-medium">{o.contract}</td><td>{o.factory}</td><td>{o.style}</td><td>{o.date}</td>
+                  <td>{o.total.toLocaleString()}</td><td>{o.shipped.toLocaleString()}</td>
                   <td className="text-warning font-medium">{o.remain.toLocaleString()}</td>
                   <td>
                     <div className="flex items-center gap-2">
@@ -199,8 +422,7 @@ export default function SupplyChain() {
                       <span className="text-xs">{o.progress}%</span>
                     </div>
                   </td>
-                  <td>{o.delivery}</td>
-                  <td>{o.status}</td>
+                  <td>{o.delivery}</td><td>{o.status}</td>
                 </tr>
               ))}
             </tbody>
@@ -212,12 +434,11 @@ export default function SupplyChain() {
         <div className="stat-card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="section-title mb-0">🏭 供应商管理</h2>
-            <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm">+ 新建工厂</button>
+            <button onClick={() => setModal("factory")} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">+ 新建工厂</button>
           </div>
-
           <div className="grid grid-cols-5 gap-3 mb-6">
             {[
-              { label: "合作工厂数", value: "12" },
+              { label: "合作工厂数", value: factoryList.length.toString() },
               { label: "总下单量", value: "156,000" },
               { label: "总下单金额", value: "¥580万" },
               { label: "在产数量", value: "28,900" },
@@ -229,22 +450,13 @@ export default function SupplyChain() {
               </div>
             ))}
           </div>
-
           <table className="data-table">
-            <thead><tr><th>工厂名称</th><th>地址</th><th>联系人</th><th>合作款数</th><th>在产量</th><th>在产金额</th><th>操作</th></tr></thead>
+            <thead><tr><th>工厂名称</th><th>地址</th><th>联系人</th><th>联系电话</th><th>合作款数</th><th>在产量</th><th>在产金额</th><th>操作</th></tr></thead>
             <tbody>
-              {[
-                { name: "东莞A厂", addr: "东莞xxx", contact: "张三", styles: 25, qty: "16,000", amount: "¥58万" },
-                { name: "深圳B厂", addr: "深圳xxx", contact: "李四", styles: 18, qty: "8,500", amount: "¥32万" },
-                { name: "广州C厂", addr: "广州xxx", contact: "王五", styles: 15, qty: "4,400", amount: "¥18万" },
-              ].map((f) => (
+              {factoryList.map((f) => (
                 <tr key={f.name}>
-                  <td className="font-medium">{f.name}</td>
-                  <td>{f.addr}</td>
-                  <td>{f.contact}</td>
-                  <td>{f.styles}</td>
-                  <td>{f.qty}</td>
-                  <td>{f.amount}</td>
+                  <td className="font-medium">{f.name}</td><td>{f.addr}</td><td>{f.contact}</td><td>{f.phone}</td>
+                  <td>{f.styles}</td><td>{f.qty}</td><td>{f.amount}</td>
                   <td>
                     <button onClick={() => setShowFactory(true)} className="text-primary text-xs hover:underline flex items-center gap-1">
                       <Eye className="w-3 h-3" /> 详情
