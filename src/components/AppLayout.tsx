@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { BarChart3, Package, Search, Calculator, Truck, FileText, ChevronLeft, ChevronRight, Bell, Target, Layers } from "lucide-react";
 
 const menuItems = [
-  { icon: BarChart3, label: "系统全局大盘", path: "/" },
+  { icon: BarChart3, label: "数据看板", path: "/" },
   { icon: Layers, label: "产品立项测算", path: "/product-setup" },
   { icon: Target, label: "目标与预期管理", path: "/forecast" },
   { icon: Search, label: "库存超级查询", path: "/query" },
@@ -27,7 +27,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Package className="w-6 h-6 text-sidebar-primary shrink-0" />
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-bold text-sm whitespace-nowrap leading-tight">供应链中台</span>
+              <span className="font-bold text-sm whitespace-nowrap leading-tight">供应链BI系统中台</span>
               <span className="text-[10px] text-muted-foreground leading-tight">SCM Middle Platform</span>
             </div>
           )}
@@ -44,8 +44,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 key={item.path}
                 to={item.path}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${active
-                    ? "bg-sidebar-accent text-sidebar-primary font-medium shadow-sm"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/60"
+                  ? "bg-sidebar-accent text-sidebar-primary font-medium shadow-sm"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/60"
                   }`}
               >
                 <item.icon className="w-4.5 h-4.5 shrink-0" />
@@ -67,7 +67,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col overflow-hidden bg-background">
         <header className="h-14 bg-card border-b border-border flex items-center justify-between px-6 shrink-0">
           <h1 className="text-sm font-medium text-foreground">
-            {menuItems.find((m) => m.path === location.pathname)?.label || "供应链中台"}
+            {menuItems.find((m) => m.path === location.pathname)?.label || "供应链中台BI系统"}
           </h1>
           <div className="flex items-center gap-4">
             <button className="relative p-2 rounded-full hover:bg-muted transition-colors border border-transparent hover:border-border">

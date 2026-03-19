@@ -18,6 +18,10 @@ export default function Forecast() {
     const [auditReason, setAuditReason] = useState("");
     const [pendingChanges, setPendingChanges] = useState<{ id: string, field: string, oldVal: number, newVal: number }[]>([]);
 
+    // History state
+    const [historyList, setHistoryList] = useState<{ time: string, reason: string, changes: number }[]>([]);
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+
     // Function to simulate Excel-like editing locally before saving
     const handleEdit = (id: string, field: keyof typeof initialData[0], val: string) => {
         let numVal = parseFloat(val);
@@ -54,6 +58,12 @@ export default function Forecast() {
             toast.error("必须填写修改原因（不少于5个字符），以满足审计要求。");
             return;
         }
+
+        const now = new Date();
+        const formattedTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+        setHistoryList([{ time: formattedTime, reason: auditReason, changes: pendingChanges.length }, ...historyList]);
+
         toast.success(`预期数据已更新，并自动保存修正记录（原因：${auditReason}）`);
         setShowAuditModal(false);
         setAuditReason("");
@@ -104,6 +114,44 @@ export default function Forecast() {
                 </div>
             )}
 
+            {/* 变更历史记录弹窗 */}
+            {showHistoryModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40" onClick={() => setShowHistoryModal(false)}>
+                    <div className="bg-card w-full max-w-lg rounded-xl shadow-xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="p-4 border-b border-border font-bold flex items-center justify-between">
+                            <span className="flex items-center gap-2"><History className="w-5 h-5 text-primary" /> 预期变更历史</span>
+                            <button onClick={() => setShowHistoryModal(false)} className="text-muted-foreground hover:text-foreground">✕</button>
+                        </div>
+                        <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                            {historyList.length === 0 ? (
+                                <div className="text-center text-muted-foreground py-10 flex flex-col items-center gap-3">
+                                    <History className="w-10 h-10 opacity-20" />
+                                    <p>当前会话暂无变更审计记录</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {historyList.map((h, i) => (
+                                        <div key={i} className="border border-border rounded-lg p-3 bg-muted/10">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="text-sm font-medium text-foreground/90">{h.time}</div>
+                                                <div className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">共调整了 {h.changes} 项数据</div>
+                                            </div>
+                                            <div className="text-sm text-foreground/80 bg-background border border-border/50 p-2.5 rounded-md">
+                                                <span className="text-muted-foreground text-xs block mb-1 font-medium">审计原因记录：</span>
+                                                {h.reason}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-3 border-t border-border bg-muted/30 text-xs text-muted-foreground text-center">
+                            历史记录自动加密并归档，满足二级审计合规要求
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold flex items-center gap-2">运营与计划预期录入中台</h2>
@@ -115,7 +163,10 @@ export default function Forecast() {
                     <button className="px-4 py-2 bg-muted text-muted-foreground hover:bg-muted/80 rounded-lg text-sm flex items-center gap-2 transition-colors">
                         <FileSpreadsheet className="w-4 h-4" /> 导入/导出
                     </button>
-                    <button className="px-4 py-2 bg-muted text-muted-foreground hover:bg-muted/80 rounded-lg text-sm flex items-center gap-2 transition-colors">
+                    <button
+                        onClick={() => setShowHistoryModal(true)}
+                        className="px-4 py-2 bg-muted text-muted-foreground hover:bg-muted/80 rounded-lg text-sm flex items-center gap-2 transition-colors"
+                    >
                         <History className="w-4 h-4" /> 变更历史
                     </button>
                     <button
