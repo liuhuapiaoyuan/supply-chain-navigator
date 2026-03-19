@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight, ArrowLeft, Truck, Factory, FileText, Eye, X, Plus, Trash2 } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 type Tab = "shipments" | "orders" | "factory";
@@ -17,12 +18,18 @@ type FactoryItem = {
 };
 
 const initShipments: ShipmentItem[] = [
-  { id: "FBA001234", styles: 3, carrier: "顺丰", dest: "美西ONT8", qty: 5000, cost: "¥21,000", date: "01-20", status: "🚚 运输中",
-    details: [{ style: "ABC001 运动T恤", qty: 2000 }, { style: "ABC002 运动短裤", qty: 1500 }, { style: "ABC003 运动外套", qty: 1500 }] },
-  { id: "FBA001230", styles: 2, carrier: "德邦", dest: "美东JFK1", qty: 3200, cost: "¥15,600", date: "01-18", status: "🚚 运输中",
-    details: [{ style: "ABC001 运动T恤", qty: 1800 }, { style: "ABC004 运动背心", qty: 1400 }] },
-  { id: "FBA001225", styles: 1, carrier: "顺丰", dest: "美西ONT8", qty: 2000, cost: "¥9,200", date: "01-15", status: "✅ 已签收",
-    details: [{ style: "ABC002 运动短裤", qty: 2000 }] },
+  {
+    id: "FBA001234", styles: 3, carrier: "顺丰", dest: "美西ONT8", qty: 5000, cost: "¥21,000", date: "01-20", status: "🚚 运输中",
+    details: [{ style: "ABC001 运动T恤", qty: 2000 }, { style: "ABC002 运动短裤", qty: 1500 }, { style: "ABC003 运动外套", qty: 1500 }]
+  },
+  {
+    id: "FBA001230", styles: 2, carrier: "德邦", dest: "美东JFK1", qty: 3200, cost: "¥15,600", date: "01-18", status: "🚚 运输中",
+    details: [{ style: "ABC001 运动T恤", qty: 1800 }, { style: "ABC004 运动背心", qty: 1400 }]
+  },
+  {
+    id: "FBA001225", styles: 1, carrier: "顺丰", dest: "美西ONT8", qty: 2000, cost: "¥9,200", date: "01-15", status: "✅ 已签收",
+    details: [{ style: "ABC002 运动短裤", qty: 2000 }]
+  },
 ];
 
 const initOrders: OrderItem[] = [
@@ -187,13 +194,13 @@ function NewShipmentForm({ onSave, onClose }: { onSave: (s: ShipmentItem) => voi
 }
 
 /* ──── New Order Form ──── */
-function NewOrderForm({ onSave, onClose }: { onSave: (o: OrderItem) => void; onClose: () => void }) {
+function NewOrderForm({ onSave, onClose, initialData }: { onSave: (o: OrderItem) => void; onClose: () => void; initialData?: { style: string; total: number } | null }) {
   const [contract, setContract] = useState("HT2401" + (20 + Math.floor(Math.random() * 30)));
   const [factory, setFactory] = useState("");
-  const [style, setStyle] = useState("");
+  const [style, setStyle] = useState(initialData?.style || "");
   const [date, setDate] = useState("2024-01-21");
   const [delivery, setDelivery] = useState("2024-03-01");
-  const [total, setTotal] = useState("2000");
+  const [total, setTotal] = useState(initialData?.total?.toString() || "2000");
   const [remark, setRemark] = useState("");
 
   const handleSave = () => {
@@ -268,6 +275,7 @@ function NewFactoryForm({ onSave, onClose }: { onSave: (f: FactoryItem) => void;
 
 /* ──── Main Page ──── */
 export default function SupplyChain() {
+  const location = useLocation();
   const [tab, setTab] = useState<Tab>("shipments");
   const [expandedShipment, setExpandedShipment] = useState<string | null>("FBA001234");
   const [showFactory, setShowFactory] = useState(false);
@@ -276,6 +284,20 @@ export default function SupplyChain() {
   const [shipmentList, setShipmentList] = useState<ShipmentItem[]>(initShipments);
   const [orderList, setOrderList] = useState<OrderItem[]>(initOrders);
   const [factoryList, setFactoryList] = useState<FactoryItem[]>(initFactories);
+  const [initialOrderData, setInitialOrderData] = useState<{ style: string; total: number } | null>(null);
+
+  useEffect(() => {
+    if (location.state?.autoOpenOrderModal) {
+      setTab("orders");
+      setModal("order");
+      setInitialOrderData({
+        style: location.state.autoFillStyle || "",
+        total: location.state.autoFillTotal || 0,
+      });
+      // clear the state from the history so it doesn't pop up again if refreshed
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   if (showFactory) {
     return (
@@ -339,8 +361,8 @@ export default function SupplyChain() {
         </ModalOverlay>
       )}
       {modal === "order" && (
-        <ModalOverlay title="新建采购订单" onClose={() => setModal(null)}>
-          <NewOrderForm onSave={(o) => setOrderList([o, ...orderList])} onClose={() => setModal(null)} />
+        <ModalOverlay title="新建采购订单" onClose={() => { setModal(null); setInitialOrderData(null); }}>
+          <NewOrderForm onSave={(o) => { setOrderList([o, ...orderList]); setModal(null); setInitialOrderData(null); }} onClose={() => { setModal(null); setInitialOrderData(null); }} initialData={initialOrderData} />
         </ModalOverlay>
       )}
       {modal === "factory" && (

@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Calculator, ArrowRight, Download, Save } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const colors = ["黑色", "白色", "灰色", "藏青", "红色", "蓝色"];
 const sizes = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
@@ -30,6 +32,11 @@ function getDaysBadge(d: number) {
 }
 
 export default function Simulation() {
+  const navigate = useNavigate();
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  const [selectedStyle, setSelectedStyle] = useState("ABC001");
+
   const [orders, setOrders] = useState<Record<string, Record<string, number>>>(() => {
     const init: Record<string, Record<string, number>> = {};
     colors.forEach((c) => { init[c] = {}; sizes.forEach((s) => { init[c][s] = 0; }); });
@@ -73,8 +80,14 @@ export default function Simulation() {
       <div className="stat-card">
         <div className="flex items-center justify-between mb-4">
           <h2 className="section-title mb-0"><Calculator className="w-4 h-4" /> 模拟下单计算</h2>
-          <select className="px-3 py-2 rounded-lg border border-input bg-background text-sm">
-            <option>ABC001 运动T恤</option><option>ABC002 运动短裤</option><option>ABC003 运动外套</option>
+          <select
+            value={selectedStyle}
+            onChange={(e) => setSelectedStyle(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-input bg-background text-sm"
+          >
+            <option value="ABC001">ABC001 运动T恤</option>
+            <option value="ABC002">ABC002 运动短裤</option>
+            <option value="ABC003">ABC003 运动外套</option>
           </select>
         </div>
       </div>
@@ -145,7 +158,13 @@ export default function Simulation() {
         </div>
 
         <div className="flex justify-center mt-6">
-          <button onClick={() => setCalculated(true)} className="px-8 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
+          <button
+            onClick={() => {
+              setCalculated(true);
+              setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+            }}
+            className="px-8 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
+          >
             🔄 计算结果
           </button>
         </div>
@@ -153,7 +172,7 @@ export default function Simulation() {
 
       {/* Results */}
       {calculated && (
-        <div className="stat-card">
+        <div ref={resultsRef} className="stat-card">
           <h3 className="section-title">📈 计算结果</h3>
           <div className="grid grid-cols-2 gap-6">
             <div className="p-4 rounded-lg bg-muted/50">
@@ -178,7 +197,27 @@ export default function Simulation() {
           <div className="flex gap-3 mt-6">
             <button className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm flex items-center gap-2"><Save className="w-4 h-4" /> 保存为草稿</button>
             <button className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm flex items-center gap-2"><Download className="w-4 h-4" /> 导出Excel</button>
-            <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm flex items-center gap-2">生成采购单 <ArrowRight className="w-4 h-4" /></button>
+            <button
+              onClick={() => {
+                if (grandTotal <= 0) {
+                  toast.error("错误：没有任何补货数量，无法生成采购单");
+                  return;
+                }
+                toast.success(`成功为您合并生成了总量为 ${grandTotal}件 的采购草稿，正在跳转前往加工...`);
+                setTimeout(() => {
+                  navigate("/supply-chain", {
+                    state: {
+                      autoOpenOrderModal: true,
+                      autoFillTotal: grandTotal,
+                      autoFillStyle: selectedStyle
+                    }
+                  });
+                }, 1200);
+              }}
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
+            >
+              生成采购单 <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}

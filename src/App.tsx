@@ -10,6 +10,8 @@ import Simulation from "./pages/Simulation";
 import SupplyChain from "./pages/SupplyChain";
 import Audit from "./pages/Audit";
 import NotFound from "./pages/NotFound";
+import ProductSetup from "./pages/ProductSetup";
+import Forecast from "./pages/Forecast";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +28,8 @@ const App = () => (
             <Route path="/simulation" element={<Simulation />} />
             <Route path="/supply-chain" element={<SupplyChain />} />
             <Route path="/audit" element={<Audit />} />
+            <Route path="/product-setup" element={<ProductSetup />} />
+            <Route path="/forecast" element={<Forecast />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
