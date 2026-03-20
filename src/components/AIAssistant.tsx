@@ -9,8 +9,20 @@ const initialMessages: Message[] = [
     { id: "3", sender: "ai", text: "正在为您检索底层数据库...\n\n款式 **ABC001 (运动T恤)** 当前预警情况：\n🔴 黑色(S码) 可售天数仅剩 12 天，属于高度断货风险。\n🔴 红色全尺码销售缓慢，存在 52 天以上的积压重置风险。\n\n建议您立即前往【计划模拟】模块，设定 60天 备货目标生成测算矩阵。需要我直接为您跳转吗？", time: "09:02" }
 ];
 
+const agents = [
+    { id: "global", name: "全能大模型", icon: "✨" },
+    { id: "supply", name: "供应链统筹", icon: "📦" },
+    { id: "data", name: "底层数据池", icon: "📊" },
+    { id: "planner", name: "补货测算器", icon: "🧮" },
+    { id: "risk", name: "断货风控眼", icon: "🚨" },
+    { id: "finance", name: "财务核算师", icon: "💰" },
+    { id: "factory", name: "云驻厂监工", icon: "🏭" },
+    { id: "logistics", name: "全球运筹官", icon: "🚢" },
+];
+
 export default function AIAssistant() {
     const [isOpen, setIsOpen] = useState(false);
+    const [activeAgent, setActiveAgent] = useState(agents[0].id);
     const [messages, setMessages] = useState<Message[]>(initialMessages);
     const [inputValue, setInputValue] = useState("");
     const endRef = useRef<HTMLDivElement>(null);
@@ -57,7 +69,7 @@ export default function AIAssistant() {
 
             {/* Chat Panel */}
             <div
-                className={`fixed bottom-6 right-6 w-[320px] h-[700px] max-h-[85vh] bg-card border border-border rounded-xl shadow-2xl flex flex-col z-50 transition-all origin-bottom-right duration-300 ${isOpen ? 'scale-100 opacity-100' : 'scale-50 opacity-0 pointer-events-none'}`}
+                className={`fixed bottom-6 right-6 w-[320px] h-[820px] max-h-[85vh] bg-card border border-border rounded-xl shadow-2xl flex flex-col z-50 transition-all origin-bottom-right duration-300 ${isOpen ? 'scale-100 opacity-100' : 'scale-50 opacity-0 pointer-events-none'}`}
             >
                 <div className="h-14 bg-sidebar flex items-center justify-between px-4 rounded-t-xl shrink-0 border-b border-sidebar-border">
                     <div className="flex items-center gap-2">
@@ -77,7 +89,21 @@ export default function AIAssistant() {
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20">
+                {/* Agent Switcher Area */}
+                <div className="bg-muted/30 p-3 grid grid-cols-4 gap-2 border-b border-border shrink-0">
+                    {agents.map(a => (
+                        <button
+                            key={a.id}
+                            onClick={() => setActiveAgent(a.id)}
+                            className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl transition-all ${activeAgent === a.id ? 'bg-background shadow border border-primary/20 text-primary scale-105' : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground border border-transparent hover:scale-100'}`}
+                        >
+                            <span className="text-[22px] leading-none mb-0.5">{a.icon}</span>
+                            <span className="text-[10px] font-medium whitespace-nowrap opacity-90">{a.name}</span>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/10">
                     {messages.map(m => (
                         <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                             <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${m.sender === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm shadow-md' : 'bg-background border border-border text-foreground rounded-tl-sm shadow-sm'

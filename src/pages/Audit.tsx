@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, Filter, Eye } from "lucide-react";
+import React, { useState } from "react";
+import { Search, Filter, Eye, TrendingUp, Calculator, AlertTriangle, Target, Factory } from "lucide-react";
 
 type AuditEntry = {
   id: string;
@@ -122,20 +122,77 @@ export default function Audit() {
         </div>
       </div>
 
-      {/* Summary */}
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: "今日操作", value: "24", sub: "最近7天 156" },
-          { label: "新建操作", value: "8" },
-          { label: "修改操作", value: "12" },
-          { label: "导入操作", value: "4" },
-        ].map((s) => (
-          <div key={s.label} className="stat-card text-center">
-            <div className="text-xs text-muted-foreground mb-1">{s.label}</div>
-            <div className="text-2xl font-bold">{s.value}</div>
-            {s.sub && <div className="text-xs text-muted-foreground mt-1">{s.sub}</div>}
+      {/* 核心协同溯源大盘: 预期/计划/在产关键变更 */}
+      <h2 className="section-title mb-4 flex items-center gap-2"><Target className="w-5 h-5" /> 核心业务流高影响变更监控雷达</h2>
+      <div className="grid grid-cols-3 gap-6 mb-2">
+        {/* 近期预期变更 */}
+        <div className="stat-card border-t-4 border-t-blue-500 shadow-sm relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-500"><TrendingUp className="w-32 h-32" /></div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 bg-blue-500/10 rounded-lg"><TrendingUp className="w-5 h-5 text-blue-500" /></div>
+            <h3 className="font-bold text-sm text-foreground mb-0">近期「预期目标」关键调校</h3>
           </div>
-        ))}
+          <div className="space-y-3 relative z-10">
+            <div className="p-3 bg-muted/40 rounded-lg text-sm border-l-2 border-blue-500 hover:bg-muted transition-colors cursor-pointer">
+              <div className="flex justify-between mb-1"><span className="font-medium text-blue-600 dark:text-blue-400">ABC001 年度预期上调</span> <span className="text-[10px] text-muted-foreground">今天 10:30</span></div>
+              <div className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                平台大促流量预热爆发，操作人将其预期总需求从 15,000 大幅上调至 <span className="text-blue-500 font-bold bg-blue-500/10 px-1 rounded">18,500</span> 件。
+              </div>
+            </div>
+            <div className="p-3 bg-muted/40 rounded-lg text-sm border-l-2 border-muted-foreground hover:bg-muted transition-colors cursor-pointer">
+              <div className="flex justify-between mb-1"><span className="font-medium">ABC005 转化模型异动</span> <span className="text-[10px] text-muted-foreground">昨天 16:45</span></div>
+              <div className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                自然流量转化率模型由 3.2% 修正为 <span className="text-danger font-bold">2.8%</span>，自动触发底层库存与备货重算机制。
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 补货计划变更 */}
+        <div className="stat-card border-t-4 border-t-emerald-500 shadow-sm relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-500"><Calculator className="w-32 h-32" /></div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 bg-emerald-500/10 rounded-lg"><Calculator className="w-5 h-5 text-emerald-500" /></div>
+            <h3 className="font-bold text-sm text-foreground mb-0">智能「补货计划」策略异动</h3>
+          </div>
+          <div className="space-y-3 relative z-10">
+            <div className="p-3 bg-muted/40 rounded-lg text-sm border-l-2 border-emerald-500 hover:bg-muted transition-colors cursor-pointer">
+              <div className="flex justify-between mb-1"><span className="font-medium text-emerald-600 dark:text-emerald-400">一键生成紧急采购矩阵</span> <span className="text-[10px] text-muted-foreground">今天 14:12</span></div>
+              <div className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                响应前端缺口，结合智能预案一次性拍板合并追加 <span className="font-bold text-emerald-500 bg-emerald-500/10 px-1 rounded">6,400</span> 件。
+              </div>
+            </div>
+            <div className="p-3 bg-muted/40 rounded-lg text-sm border-l-2 border-emerald-500 hover:bg-muted transition-colors cursor-pointer">
+              <div className="flex justify-between mb-1"><span className="font-medium">全局防线外扩(60→90)</span> <span className="text-[10px] text-muted-foreground">今天 09:15</span></div>
+              <div className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                操作人由于海运预警，将全盘安全备货天数基准由 60天 临时延长至 <span className="font-bold">90天(远期保障型)</span>。
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 在产/交期记录 */}
+        <div className="stat-card border-t-4 border-t-orange-500 shadow-sm relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-500"><Factory className="w-32 h-32" /></div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 bg-orange-500/10 rounded-lg"><AlertTriangle className="w-5 h-5 text-orange-500" /></div>
+            <h3 className="font-bold text-sm text-foreground mb-0">执行端「在产/交付」风险变更</h3>
+          </div>
+          <div className="space-y-3 relative z-10">
+            <div className="p-3 bg-danger/5 rounded-lg text-sm border-l-2 border-danger hover:bg-danger/10 transition-colors cursor-pointer">
+              <div className="flex justify-between mb-1"><span className="font-bold text-danger">HT260315 交期违约延误</span> <span className="text-[10px] text-muted-foreground">今天 11:15</span></div>
+              <div className="text-xs text-danger/80 line-clamp-2 mt-1">
+                东莞A厂产能异常导致原定交期被强行延后 <span className="font-bold underline">5 天</span>，严峻影响前端可售天数防线！
+              </div>
+            </div>
+            <div className="p-3 bg-muted/40 rounded-lg text-sm border-l-2 border-orange-500 hover:bg-muted transition-colors cursor-pointer">
+              <div className="flex justify-between mb-1"><span className="font-medium text-success">HT260310 提前完工入仓</span> <span className="text-[10px] text-muted-foreground">昨天 18:30</span></div>
+              <div className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                深圳B厂全量短裤按质顺利核销入库，直接解除该 SKU 后续长达两个月的供应链警报。
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Table */}
@@ -147,8 +204,8 @@ export default function Audit() {
           </thead>
           <tbody>
             {filtered.map((a) => (
-              <>
-                <tr key={a.id}>
+              <React.Fragment key={a.id}>
+                <tr>
                   <td className="text-muted-foreground whitespace-nowrap text-xs">{a.time}</td>
                   <td><span className="alert-badge-success">{a.user}</span></td>
                   <td className="text-xs">{a.module}</td>
@@ -161,29 +218,29 @@ export default function Audit() {
                         onClick={() => setExpanded(expanded === a.id ? null : a.id)}
                         className="text-primary text-xs hover:underline flex items-center gap-1"
                       >
-                        <Eye className="w-3 h-3" /> 变更
+                        <Eye className="w-3 h-3" /> 变更明细
                       </button>
                     )}
                   </td>
                 </tr>
                 {expanded === a.id && a.changes && (
                   <tr key={a.id + "-changes"}>
-                    <td colSpan={7} className="bg-accent/30 p-4">
-                      <div className="text-xs font-medium mb-2">字段变更明细</div>
+                    <td colSpan={7} className="bg-accent/30 p-4 border-y border-border">
+                      <div className="text-xs font-bold mb-3 flex items-center gap-2"><Filter className="w-3 h-3" />系统级字段快照溯源</div>
                       <table className="w-full text-xs">
                         <thead>
-                          <tr className="text-muted-foreground">
-                            <th className="text-left py-1 px-2">字段</th>
-                            <th className="text-left py-1 px-2">变更前</th>
-                            <th className="text-left py-1 px-2">变更后</th>
+                          <tr className="text-muted-foreground border-b border-border/50">
+                            <th className="text-left pb-2 px-2">业务数据字段</th>
+                            <th className="text-left pb-2 px-2">操作前旧值</th>
+                            <th className="text-left pb-2 px-2">覆写后新值</th>
                           </tr>
                         </thead>
                         <tbody>
                           {a.changes.map((c, i) => (
-                            <tr key={i}>
-                              <td className="py-1 px-2 font-medium">{c.field}</td>
-                              <td className="py-1 px-2 text-danger line-through">{c.before}</td>
-                              <td className="py-1 px-2 text-success font-medium">{c.after}</td>
+                            <tr key={i} className="border-b border-border/50 last:border-0 hover:bg-muted/30">
+                              <td className="py-2 px-2 font-medium">{c.field}</td>
+                              <td className="py-2 px-2 text-danger line-through decoration-danger/50">{c.before}</td>
+                              <td className="py-2 px-2 text-primary font-bold bg-primary/5 rounded">{c.after}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -191,7 +248,7 @@ export default function Audit() {
                     </td>
                   </tr>
                 )}
-              </>
+              </React.Fragment>
             ))}
           </tbody>
         </table>

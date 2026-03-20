@@ -12,6 +12,8 @@ import Audit from "./pages/Audit";
 import NotFound from "./pages/NotFound";
 import ProductSetup from "./pages/ProductSetup";
 import Forecast from "./pages/Forecast";
+import Backup from "./pages/Backup";
+import Permissions from "./pages/Permissions";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +32,8 @@ const App = () => (
             <Route path="/audit" element={<Audit />} />
             <Route path="/product-setup" element={<ProductSetup />} />
             <Route path="/forecast" element={<Forecast />} />
+            <Route path="/backup" element={<Backup />} />
+            <Route path="/permissions" element={<Permissions />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BarChart3, Package, Search, Calculator, Truck, FileText, ChevronLeft, ChevronRight, Bell, Target, Layers } from "lucide-react";
+import { BarChart3, Package, Search, Calculator, Truck, FileText, ChevronLeft, ChevronRight, Bell, Target, Layers, Database, Shield } from "lucide-react";
 import AIAssistant from "./AIAssistant";
 
 const menuItems = [
@@ -11,6 +11,8 @@ const menuItems = [
   { icon: Layers, label: "产品测算", path: "/product-setup" },
   { icon: Target, label: "目标预期", path: "/forecast" },
   { icon: FileText, label: "系统审计", path: "/audit" },
+  { icon: Database, label: "备份恢复", path: "/backup" },
+  { icon: Shield, label: "数据权限", path: "/permissions" },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
