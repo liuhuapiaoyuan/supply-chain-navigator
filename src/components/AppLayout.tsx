@@ -4,11 +4,11 @@ import { BarChart3, Package, Search, Calculator, Truck, FileText, ChevronLeft, C
 
 const menuItems = [
   { icon: BarChart3, label: "今日关注", path: "/" },
+  { icon: Search, label: "库存查询", path: "/query" },
+  { icon: Calculator, label: "计划模拟", path: "/simulation" },
+  { icon: Truck, label: "供应链执行", path: "/supply-chain" },
   { icon: Layers, label: "产品测算", path: "/product-setup" },
   { icon: Target, label: "目标预期", path: "/forecast" },
-  { icon: Search, label: "库存查询", path: "/query" },
-  { icon: Calculator, label: "补货模拟", path: "/simulation" },
-  { icon: Truck, label: "供应链管控", path: "/supply-chain" },
   { icon: FileText, label: "系统审计", path: "/audit" },
 ];
 
@@ -27,7 +27,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Package className="w-6 h-6 text-sidebar-primary shrink-0" />
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-bold text-sm whitespace-nowrap leading-tight">供应链BI系统中台</span>
+              <span className="font-bold text-sm whitespace-nowrap leading-tight">智能预决策数据中台</span>
               <span className="text-[10px] text-muted-foreground leading-tight">SCM Middle Platform</span>
             </div>
           )}

@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
-import { Calculator, ArrowRight, Download, Save } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { Calculator, ArrowRight, Download, Save, Settings2, Sparkles } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 const colors = ["黑色", "白色", "灰色", "藏青", "红色", "蓝色"];
@@ -33,16 +33,54 @@ function getDaysBadge(d: number) {
 
 export default function Simulation() {
   const navigate = useNavigate();
+  const location = useLocation();
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  const [selectedStyle, setSelectedStyle] = useState("ABC001");
+  const [selectedStyle, setSelectedStyle] = useState(() => location.state?.autoFillStyle || "ABC001");
 
   const [orders, setOrders] = useState<Record<string, Record<string, number>>>(() => {
     const init: Record<string, Record<string, number>> = {};
     colors.forEach((c) => { init[c] = {}; sizes.forEach((s) => { init[c][s] = 0; }); });
+    const { autoFillColor, autoFillSize, autoFillQty } = location.state || {};
+    if (autoFillColor && autoFillSize && autoFillQty) {
+      if (init[autoFillColor] && typeof init[autoFillColor][autoFillSize] !== 'undefined') {
+        init[autoFillColor][autoFillSize] = autoFillQty;
+      }
+    }
     return init;
   });
+
   const [calculated, setCalculated] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.autoFillQty) {
+      toast.success(`系统已自动填充来自库存查询的计划缺口数据: ${location.state.autoFillColor}-${location.state.autoFillSize} 共 ${location.state.autoFillQty}件，请您核对并测算影响。`);
+      // Clear state so refresh doesn't pop toast again
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  const [targetDays, setTargetDays] = useState(60);
+  const [expectedLift, setExpectedLift] = useState(1.0);
+  const [returnRate, setReturnRate] = useState(0.05);
+
+  const aiSmartCalculate = () => {
+    const newOrders: Record<string, Record<string, number>> = {};
+    colors.forEach((c) => {
+      newOrders[c] = {};
+      sizes.forEach((s) => {
+        const baseDaily = dailySales[c]?.[s] || 1;
+        const currentStock = (currentDays[c]?.[s] || 0) * baseDaily;
+        const projectedDemand = targetDays * (baseDaily * expectedLift);
+        const gap = projectedDemand - currentStock;
+        const requiredProduction = gap > 0 ? gap / (1 - returnRate) : 0;
+        newOrders[c][s] = Math.round(requiredProduction);
+      });
+    });
+    setOrders(newOrders);
+    setCalculated(false);
+    toast.success("✨ 已根据【预设参数模型】智能推演补货清单矩阵！");
+  };
 
   const setOrder = (color: string, size: string, val: number) => {
     setOrders((prev) => ({ ...prev, [color]: { ...prev[color], [size]: val } }));
@@ -92,6 +130,7 @@ export default function Simulation() {
         </div>
       </div>
 
+
       {/* Current stock days */}
       <div className="stat-card">
         <h3 className="section-title">📊 当前库存状态（可售天数）</h3>
@@ -115,14 +154,52 @@ export default function Simulation() {
         </div>
       </div>
 
+
+      {/* Parameters Panel */}
+      <div className="stat-card">
+        <h3 className="section-title"><Settings2 className="w-4 h-4" /> 🎛️ 结合库存数据智能预案参数设定</h3>
+        <div className="grid grid-cols-4 gap-4 items-end">
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">目标备货周期 (天)</label>
+            <select value={targetDays} onChange={e => setTargetDays(Number(e.target.value))} className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:ring-1 focus:ring-primary">
+              <option value={30}>30天 (近端/激进)</option>
+              <option value={60}>60天 (标准防线)</option>
+              <option value={90}>90天 (远期/海派)</option>
+              <option value={120}>120天 (海运主力)</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">预期销量爆发系数</label>
+            <select value={expectedLift} onChange={e => setExpectedLift(Number(e.target.value))} className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:ring-1 focus:ring-primary">
+              <option value={0.8}>0.8x (淡季萎缩缩量)</option>
+              <option value={1.0}>1.0x (维持平稳动销)</option>
+              <option value={1.2}>1.2x (旺季日销微涨)</option>
+              <option value={1.5}>1.5x (大促/黑五爆发)</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">系统预估退货率 (损耗)</label>
+            <select value={returnRate} onChange={e => setReturnRate(Number(e.target.value))} className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:ring-1 focus:ring-primary">
+              <option value={0.02}>2% (极低退货类目)</option>
+              <option value={0.05}>5% (行业普适均值)</option>
+              <option value={0.10}>10% (服饰鞋靴偏高)</option>
+              <option value={0.15}>15% (严重高风险预估)</option>
+            </select>
+          </div>
+          <div>
+            <button onClick={aiSmartCalculate} className="w-full px-4 py-2 bg-primary/10 text-primary font-bold rounded-lg border border-primary/20 hover:bg-primary hover:text-primary-foreground transition-all flex items-center justify-center gap-2">
+              <Sparkles className="w-4 h-4" /> 一键AI测算输出
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Order input */}
       <div className="stat-card">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="section-title mb-0">➕ 模拟新增订单</h3>
+          <h3 className="section-title mb-0">➕ 补货/采购清单矩阵</h3>
           <div className="flex gap-2">
-            <button onClick={() => fillTo(60)} className="px-3 py-1.5 rounded-lg bg-accent text-accent-foreground text-xs hover:opacity-80">补货到60天</button>
-            <button onClick={() => fillTo(90)} className="px-3 py-1.5 rounded-lg bg-accent text-accent-foreground text-xs hover:opacity-80">补货到90天</button>
-            <button onClick={() => { const init: Record<string, Record<string, number>> = {}; colors.forEach(c => { init[c] = {}; sizes.forEach(s => init[c][s] = 0); }); setOrders(init); setCalculated(false); }} className="px-3 py-1.5 rounded-lg bg-muted text-muted-foreground text-xs hover:opacity-80">清空</button>
+            <button onClick={() => { const init: Record<string, Record<string, number>> = {}; colors.forEach(c => { init[c] = {}; sizes.forEach(s => init[c][s] = 0); }); setOrders(init); setCalculated(false); }} className="px-3 py-1.5 rounded-lg bg-muted text-muted-foreground text-xs hover:opacity-80">清空矩阵</button>
           </div>
         </div>
         <div className="overflow-auto">
