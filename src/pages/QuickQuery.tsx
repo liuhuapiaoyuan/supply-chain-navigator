@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, ChevronDown } from "lucide-react";
+import PageIntro from "@/components/PageIntro";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 const trendData = [
@@ -46,6 +47,14 @@ export default function QuickQuery() {
 
   return (
     <div className="space-y-6 max-w-[1200px]">
+      <PageIntro
+        title="本页说明：单品全链路穿透"
+        lines={[
+          "在「今日关注」看到风险面之后，用库存查询落到具体 SKU：FBA、在途、在产、本地仓与预留一站式汇总。",
+          "结合日均销量得到可售天数，并可用趋势与供需缺口表支撑复盘。",
+        ]}
+        flowHint="主线位置：数据接入 → 今日关注 → 库存查询 → 目标/测算/模拟 → 供应链执行"
+      />
       {/* Search */}
       <div className="stat-card">
         <div className="flex gap-3 items-end">

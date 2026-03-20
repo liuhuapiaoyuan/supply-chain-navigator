@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Save, AlertCircle, History, FileSpreadsheet, Eye } from "lucide-react";
+import PageIntro from "@/components/PageIntro";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
@@ -78,6 +79,14 @@ export default function Forecast() {
 
     return (
         <div className="space-y-6 max-w-[1400px]">
+            <PageIntro
+                title="本页说明：SKU 月度目标与变更留痕"
+                lines={[
+                    "运营在此维护 SKU 级多月份销量/转化假设，作为计划模拟与采购节奏的对齐输入。",
+                    "保存变更必须填写原因，并与系统审计中的追溯叙事一致，便于内控问询。",
+                ]}
+                flowHint="主线位置：洞察查询之后，进入目标预期 → 产品测算 / 计划模拟 → 供应链执行"
+            />
 
             {/* 审计审批弹窗 */}
             {showAuditModal && (

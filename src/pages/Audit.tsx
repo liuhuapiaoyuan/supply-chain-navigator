@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Search, Filter, Eye, TrendingUp, Calculator, AlertTriangle, Target, Factory } from "lucide-react";
+import PageIntro from "@/components/PageIntro";
 
 type AuditEntry = {
   id: string;
@@ -92,6 +93,14 @@ export default function Audit() {
 
   return (
     <div className="space-y-6 max-w-[1200px]">
+      <PageIntro
+        title="本页说明：操作追溯与 Diff"
+        lines={[
+          "记录谁在何时对出库、采购、导入、主数据等做了什么，支持按模块与动作类型筛选。",
+          "对关键字段展示变更前/后对照，满足内控与复盘「数字从哪来、谁改过」的诉求。",
+        ]}
+        flowHint="主线位置：治理层 — 与数据权限、备份恢复共同构成可信运营底座"
+      />
       {/* Filters */}
       <div className="stat-card">
         <div className="flex gap-3 items-end">

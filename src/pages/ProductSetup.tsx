@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Calculator, Save, CheckCircle2, XCircle, RefreshCw, History, Percent, DollarSign, TrendingDown, Truck } from "lucide-react";
+import PageIntro from "@/components/PageIntro";
 import { toast } from "sonner";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 
@@ -56,6 +57,14 @@ export default function ProductSetup() {
 
     return (
         <div className="space-y-6 max-w-[1200px]">
+            <PageIntro
+                title="本页说明：立项前经营模型测算"
+                lines={[
+                    "在投产与备货决策前，按 SPU 汇总采购、头程、平台佣金、FBA、仓储与退货摊销，输出净利与毛利率。",
+                    "可保存快照并模拟审批门槛（如利润率过低触发预警），与计划部门的「可卖、能赚」判断对齐。",
+                ]}
+                flowHint="主线位置：目标预期旁路 — 与计划模拟共用同一套经营假设语言"
+            />
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold">经营模型测算与立项</h2>
