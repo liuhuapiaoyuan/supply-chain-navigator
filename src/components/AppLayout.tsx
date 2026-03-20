@@ -3,13 +3,13 @@ import { Link, useLocation } from "react-router-dom";
 import { BarChart3, Package, Search, Calculator, Truck, FileText, ChevronLeft, ChevronRight, Bell, Target, Layers } from "lucide-react";
 
 const menuItems = [
-  { icon: BarChart3, label: "数据看板", path: "/" },
-  { icon: Layers, label: "产品立项测算", path: "/product-setup" },
-  { icon: Target, label: "目标与预期管理", path: "/forecast" },
-  { icon: Search, label: "库存超级查询", path: "/query" },
-  { icon: Calculator, label: "补货模拟沙盒", path: "/simulation" },
-  { icon: Truck, label: "供应链执行网", path: "/supply-chain" },
-  { icon: FileText, label: "系统变更审计", path: "/audit" },
+  { icon: BarChart3, label: "今日关注", path: "/" },
+  { icon: Layers, label: "产品测算", path: "/product-setup" },
+  { icon: Target, label: "目标预期", path: "/forecast" },
+  { icon: Search, label: "库存查询", path: "/query" },
+  { icon: Calculator, label: "补货模拟", path: "/simulation" },
+  { icon: Truck, label: "供应链管控", path: "/supply-chain" },
+  { icon: FileText, label: "系统审计", path: "/audit" },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
